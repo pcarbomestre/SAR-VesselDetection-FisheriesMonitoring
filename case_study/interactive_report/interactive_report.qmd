@@ -40,19 +40,28 @@ import plotly.graph_objs as go
 from sklearn import preprocessing
 ```
 
-# Case Study
+# Vessel detection using Synthetic Aperture Radar: Potential for improved fisheries management
 
-This section focuses on implementing our trained model on Sentinel 1 images from the ESA Copernicus program to test its usage on real-world SAR images. The specific marine region under examination is the Corcovado Gulf located in the southern part of Chile. We chose this area as a case study based on three criteria. Firstly, the Corcovado Gulf is known for active fishing activities, including both artisanal and industrial fisheries. The commercial fishing of hake and spider crab is carried out using larger fishing vessels that have metallic superstructures and hulls, making their signature on SAR images easily distinguishable compared to smaller or wooden boats. Secondly, considering the limited maritime traffic in the area, except for the passenger lanes connecting Quellón to Guaitecas and Port Raul Marin Balmaceda, we can reasonably assume that the model's detections are primarily associated with fishing activity, eliminating the need for an additional classification model to differentiate between fishing and non-fishing vessels—which development was beyond the scope of this project. This allows us to extrapolate the detections to fishing vessels and qualitatively showcase the application of the model through a case study focused on fisheries. Lastly, the Corcovado region benefits from wide Sentinel 1 coverage, providing multiple complete and partial images of the study area on a monthly basis.
+This report showcases the implementation of a Deep Learning vessel detection model on Sentinel 1 SAR images from the ESA Copernicus program. A total of 348 images, amounting to 93GB of data, were extracted from the Google Earth Engine (GEE) and processed to evaluate a period from January 2018 to December 2022, covering 1024011 km2. The detection model was applied after reprojecting the images to a CRS of interest. The resulting bounding boxes from the model were converted into coordinate points, representing the precise locations of the detected vessels. The images below provide visual examples of this process. Starting with the raw images, the vessels are detected using the model, and their bounding boxes are extracted. By calculating the centroids of these bounding boxes, we obtain the accurate coordinates of the vessels. This transformation of the model outputs into meaningful data has great potential for various applications, including fisheries management.
 
-## Corcovado Gulf
+<div style="text-align: center;">
+  [<img src="assets/raw_test_image.jpg" alt="Raw Test Image" width="30%" height="30%" />](assets/raw_test_image.jpg)
+  [<img src="assets/bounded_test_image.jpg" alt="Bounded Test Image" width="30%" height="30%" />](assets/bounded_test_image.jpg)
+  [<img src="assets/centroids_test_image.jpg" alt="Centroids Test Image" width="30%" height="30%" />](assets/centroids_test_image.jpg)
+</div>
 
-The area of interest (AOI) encompasses 6615.83 km2 of sea and coastline situated at the entrance of the Corcovado Gulf. The area is situated between two administrative fishing regions, the X Region Los Lagos and the XI Region Aysén, as designated by the Chilean National Service for Fishing and Aquaculture. It also includes a 1019 km2 protected area, the Tictoc-Golfo Corcovado Marine Park, established in 2022 and located in the northeast of our AOI.
 
-Most of the fishing efforts in the AOI are directed towards nine benthic species, including clams, mussels, sea urchins, seaweeds, and crabs from the genus Cancer (Molinet et al. 2011), This activity is primarily carried out by boats ranging from 7 to 15 meters in length, with most of them exceeding the resolution requirements for their detection. However, the area involves the fisheries of the southern hake (Merluccius australis), and southern king crab (Lithodes santolla), both from artisanal fishing boats with lengths up to 18 m (Molinet et al. 2020)— above SAR’s resolution—, and industrial fishing vessels (Kitts et al. 2020; Molinet et al. 2019). These vessels, and the fishing carriers assisting artisanal vessels in transhipping operations, are the potential targets of the detection model.
+## Case Study
+
+The specific marine region under examination is the Corcovado Gulf, located in southern Chile. We chose this area as a case study based on three criteria. Firstly, the Corcovado Gulf is known for active fishing activities, including artisanal and industrial fisheries. The commercial fishing of hake and spider crab is carried out using large fishing vessels with metallic superstructures and hulls, making their signature on SAR images easily distinguishable compared to smaller or wooden boats. Secondly, considering the limited maritime traffic in the area, except for the passenger lanes connecting Quellón to Guaitecas and Port Raul Marin Balmaceda, we can reasonably assume that the model's detections are primarily associated with fishing activity, eliminating the need for an additional classification model to differentiate between fishing and non-fishing vessels—which development was beyond the scope of this project. This allows us to extrapolate the detections to fishing vessels and qualitatively showcase the application of the model through a case study focused on fisheries. Lastly, the Corcovado region benefits from wide Sentinel 1 coverage, providing multiple complete and partial images of the study area on a monthly basis.
+
+The area of interest (AOI) encompasses 6615.83 km2 of sea and coastline at the Corcovado Gulf's entrance. The area is situated between two administrative fishing regions, the X Region of Los Lagos and the XI Region of Aysén, as designated by the Chilean National Service for Fishing and Aquaculture. It also includes a 1019 km2 protected area, the Tictoc-Golfo Corcovado Marine Park, established in 2022 and located northeast of our AOI.
+
+
+Most of the fishing efforts in the AOI are directed towards nine benthic species, including clams, mussels, sea urchins, seaweeds, and crabs from the genus Cancer (Molinet et al. 2011). This activity is primarily carried out by boats ranging from 7 to 15 meters in length, with most of them exceeding the resolution requirements for their detection. However, the area also involves the fisheries of the southern hake (Merluccius australis), and southern king crab (Lithodes santolla), both from artisanal fishing boats with lengths up to 18 m (Molinet et al. 2020)— above SAR’s resolution—, and industrial fishing vessels (Kitts et al. 2020; Molinet et al. 2019). These vessels, and the fishing carriers assisting artisanal vessels in transhipping operations, are the potential targets of the detection model.
+
 
 ## Vessel detections
-
-A total of 348 Sentinel 1 images, amounting to 93GB of data, were extracted from the Google Earth Engine (GEE) and processed for evaluation within a time period from January 2018 to December 2022, covering a total of 1024011 km2. In accordance with the methods section, the model outputs' bounding boxes were transformed into coordinate points representing the locations of the detected vessels. Each detection was assigned its detection score and recorded with the corresponding date and time of the associated SAR image. To exclude potential false positives, detections with scores below 0.6 were removed from the dataset. Additionally, objects erroneously detected near the shoreline were excluded by clipping them out of a coast shapefile layer obtained from earthworks.stanford.edu. Furthermore, an exclusion buffer of 2km from the coastline was applied to include only vessels operating in open waters, where the fishing activities of interest are concentrated.
 
 ```{python}
 # Read the shapefile
@@ -69,6 +78,8 @@ vessels.crs = 'EPSG:4326'
 aoi.crs = 'EPSG:4326' 
 ```
 
+Each vessel detected was assigned its detection score from the model and recorded with the corresponding date and time of the associated SAR image. Detections with scores below 0.6 were removed from the dataset to exclude potential false positives. 
+
 ```{python}
 # Convert 'date' column to datetime type
 vessels['date'] = pd.to_datetime(vessels['date'])
@@ -76,13 +87,11 @@ vessels['date'] = pd.to_datetime(vessels['date'])
 vessels['year'] = vessels['date'].dt.year
 # Filter by score value
 filtered_vessels = vessels[vessels['score'] > 0.6]
-```
 
-```{python}
 # Create a Folium map centered on the centroid of the vessels GeoDataFrame
 center_lat = aoi.centroid.y.mean()
 center_lon = aoi.centroid.x.mean()
-map = folium.Map(location=[center_lat, center_lon], zoom_start=10,tiles=None)
+map = folium.Map(location=[center_lat, center_lon], zoom_start=9,tiles=None)
 
 # Add ESRI Ocean Base map
 esri_ocean = folium.TileLayer(
@@ -148,6 +157,8 @@ map.add_child(folium.LayerControl())
 map
 ```
 
+<br>
+Additionally, objects erroneously detected near the shoreline were excluded by clipping them out of a coast shapefile layer obtained from earthworks.stanford.edu. Furthermore, an exclusion buffer of 2km from the coastline was applied to include only vessels operating in open waters, where the fishing activities of interest concentrate. 
 
 
 ```{python}
@@ -159,13 +170,11 @@ buffered_coastline = gpd.GeoDataFrame(geometry=buffered_coastline)
 clipped_coastline = gpd.overlay(buffered_coastline, aoi, how='intersection')
 # Perform the spatial operation to select non-intersecting points
 non_intersecting_vessels = filtered_vessels[~filtered_vessels.intersects(buffered_coastline.geometry.iloc[0])]
-```
 
-```{python}
 # Create a Folium map centered on the centroid of the vessels GeoDataFrame
 center_lat = aoi.centroid.y.mean()
 center_lon = aoi.centroid.x.mean()
-map = folium.Map(location=[center_lat, center_lon], zoom_start=10,tiles=None)
+map = folium.Map(location=[center_lat, center_lon], zoom_start=9,tiles=None)
 
 # Add ESRI Ocean Base map
 esri_ocean = folium.TileLayer(
@@ -242,6 +251,9 @@ map.add_child(folium.LayerControl())
 map
 ```
 
+<br>
+After that preprocessing, a total of 365 vessels were identified and selected for the analysis, with most detections occurring during the initial years of the specified timeframe 
+
 ```{python}
 # Extract the 'year' column as a pandas Series
 year_series = non_intersecting_vessels['year']
@@ -260,14 +272,12 @@ year_counts = pd.concat([year_counts, total_row], ignore_index=True)
 print(year_counts)
 ```
 
-A total of 365 vessels were identified and selected for analysis, with the majority of detections occurring during the initial years of the specified timeframe.
-
 
 ## Spatial information
 
-### Heat map
+To assess the spatial distribution of the vessels, we generated a static heatmap that combines observations from all five years. Additionally, we created a dynamic heatmap that displays the presence of vessels on a yearly basis.
 
-To assess the spatial distribution of the vessels, we generated a heatmap and a density map using a 5x5km grid. Attending to Figure 9, we can see that all fishing-related activities, including navigation, fishing, and transhipping, are predominantly concentrated in the southern region of our AOI, particularly in the adjacent waters of Guaitecas. Additionally, there is a noticeable absence of any activity on the east-northeast side, precisely where the Tictoc-Golfo Corcovado Marine Park is located. 
+### Heat maps
 
 ```{python}
 # Create a Folium map centered on the centroid of the vessels GeoDataFrame
@@ -309,8 +319,6 @@ tile = folium.TileLayer(
 # Display the map
 m
 ```
-
-### Heatmap over time
 
 
 ```{python}
@@ -356,8 +364,12 @@ tile = folium.TileLayer(
 m
 ```
 
+<br>
+Attending to the previous maps, we can see that all fishing-related activities, including navigation, fishing, and transhipping, are predominantly concentrated in the southern region of our AOI, particularly in the adjacent waters of Guaitecas. Additionally, there is a noticeable absence of any activity on the east-northeast side, precisely where the Tictoc-Golfo Corcovado Marine Park is located. 
 
-### Density grid
+### Density maps
+
+To gain insights into the number of vessels associated with a particular region during each time period, we constructed a density map using a 5x5km grid. This map allows us to visualize the concentration of vessels within specific areas for the entire period and also visualize the changes over time.
 
 ```{python}
 # Read the GeoJSON file containing your point data
@@ -404,16 +416,11 @@ filtered_grid = grid.dropna(subset=['point_counts'])
 # Sum all the values in the 'point_counts' column
 total_sum = filtered_grid['point_counts'].sum()
 
-# Print the resulting sum
-print(total_sum)
-```
 
-
-```{python}
 # Create a Folium map centered on the centroid of the vessels GeoDataFrame
 center_lat = aoi.centroid.y
 center_lon = aoi.centroid.x
-m = folium.Map(location=[center_lat, center_lon], zoom_start=10)
+m = folium.Map(location=[center_lat, center_lon], zoom_start=9)
 
 
 # Create a Folium Choropleth layer based on the 'point_counts' column
@@ -470,8 +477,6 @@ tile = folium.TileLayer(
 m
 ```
 
-### Density over time
-
 ```{python}
 # Read the GeoJSON file containing your point data
 points = non_intersecting_vessels
@@ -524,10 +529,7 @@ grid = grid.rename(columns={'count': 'point_counts', 'level_0': 'id'})[['geometr
 
 # Rename columns and remove unnecessary ones
 grid = grid.dropna(subset=['year'])
-```
 
-
-```{python}
 
 # Define the date transformation function
 def transform_date(period):
@@ -546,10 +548,7 @@ grid["date"] = grid["date"].astype(int).astype(str)
 
 # Find the maximum value in the 'point_counts' column
 max_value = grid['point_counts'].max()
-```
 
-
-```{python}
 # Create an empty dataframe for all combinations of 'id' and 'date'
 all_combinations = pd.MultiIndex.from_product([grid['id'].unique(), grid['date'].unique()], names=['id', 'date'])
 
@@ -561,10 +560,7 @@ grid = pd.merge(full_grid, grid, on=['id', 'date'], how='left')
 
 # Fill missing point_counts with 0
 grid['point_counts'] = grid['point_counts'].fillna(0).astype(int)
-```
 
-
-```{python}
 # map values in tot_counts to appropriate hex color values
 min_color, max_color = min(grid["point_counts"]), max(grid["point_counts"])
 
@@ -604,14 +600,10 @@ grid = gpd.GeoDataFrame(grid)
 geometries = grid[["geometry"]]
 geo_geometries = gpd.GeoDataFrame(geometries)
 geo_geometries = geo_geometries.drop_duplicates().reset_index()
-```
 
-
-
-```{python}
 # Create a Folium map centered at the mean coordinates of the grid
 center = [grid['geometry'].centroid.y.mean(), grid['geometry'].centroid.x.mean()]
-slider_map = folium.Map(location=center, zoom_start=10)
+slider_map = folium.Map(location=center, zoom_start=9)
 
 TimeSliderChoropleth(
     name="Time slider",
@@ -636,11 +628,15 @@ slider_map
 
 ```
 
-## Temporal information
+<br>
+Despite the limited scope of this analysis, some of its findings could potentially be used for describing the local fisheries. For instance, the spatial pattern detected could be attributed to the location of the primary fishing grounds, which would be situated north of Guaitecas and east of the Queitao islands in the central region of the AOI. This distribution at least highlights areas where fishing activity is not predominant and from which fishery enforcement efforts could be redirected towards higher vessel density areas.
 
-Regarding to the temporal distribution of the detections, Figure 10 illustrates the number of selected vessels per month. Consistent with the values in Table 1, the graph shows an overall downward trend in the number of detected vessels over the years. However, the variations in vessel counts can be explained by the changes in SAR images availability and area covered rather than actuall changes in vessel precense. To address this, and to derive meaningful conclusions from the temporal series, we can normalize the number of vessels based on the corresponding area covered in the images processed for each month. 
+Additionally, the absence of vessel presence within the waters inside the Marine Park is noteworthy. This observation sheds light on the rationale behind designating that specific area as protected in 2022. It is possible that the area's lower interest and reduced conflict among stakeholders facilitated or influenced its selection for protection.
 
 
+## Temporal series
+
+Regarding to the temporal distribution of the detections, the following figure illustrates the number of selected vessels per month. Consistent with the values in the following table, the graph shows an overall downward trend in the number of detected vessels over the years. However, the variations in vessel counts can be explained by the changes in SAR images availability and area covered rather than actuall changes in vessel precense. 
 
 ```{python}
 vessels_of_interest = non_intersecting_vessels
@@ -695,14 +691,12 @@ fig.show()
 
 ```
 
-### Vessel/area
+To address this, and to derive meaningful conclusions from the temporal series, we can normalize the number of vessels based on the corresponding area covered in the images processed for each month.
 
 ```{python}
 image_details_path = '/Users/polcarbo/Documents/Documents/2023/UOC/PEC/PEC4/SSDD_pcarbomestre3.0/case_study/image_details.xlsx'
 image_details = pd.read_excel(image_details_path)
-```
 
-```{python}
 # Convert date column to datetime
 image_details['date'] = pd.to_datetime(image_details['date'])
 # Create new column for year_month
@@ -719,15 +713,7 @@ combined_df['area_km2'] = combined_df['area'] / 1e6
 combined_df['vessels_per_km2'] = combined_df['vessels'] / combined_df['area_km2']
 # Normalize vessels_per_km2
 combined_df['vessels_per_km2_normalized'] = (combined_df['vessels_per_km2'] - combined_df['vessels_per_km2'].min()) / (combined_df['vessels_per_km2'].max() - combined_df['vessels_per_km2'].min())
-# Check the new dataframe
-combined_df.head()
-```
 
-```{python}
-sum(combined_df['area_km2'])
-```
-
-```{python}
 # Normalize 'vessels' values for color mapping
 min_max_scaler = preprocessing.MinMaxScaler()
 vessel_norm = min_max_scaler.fit_transform(combined_df[['vessels']])
@@ -767,29 +753,19 @@ fig = go.Figure(data=[data], layout=layout)
 fig.show()
 ```
 
-## Fisheries implications
+The normalized time series, reveals that the previous downward trend is no longer evident. In this case, there isn't a noticeable pattern across the years. However, there are some anomalies in the number of detections, such as a significant increase at the end of 2019. It would be worthwhile to investigate whether this could be linked to a specific event related to fishing activities in the region, such as changes in fishing regulations like quota increases or an abnormality in the stock's growth due to ecological processes.
 
-Despite the limited scope of this analysis, some of its findings potentially coulkd be used for describing the local fisheries. For instance, the spatial pattern detected could be attributed to the location of the primary fishing grounds, which would be situated north of Guaitecas and east of the Queitao islands, in the central region of the AOI. This distribution at least highlights areas where fishing activity is not predominant, from which efforts towards fishery enforcement could be redirected towards higher vessel density areas.
+### Seasonal distribution
 
-Additionally, the absence of vessel presence within the waters encompassed by the Marine Park is noteworthy. This observation sheds light on the rationale behind designating that specific area as protected in 2022. It is possible that the area's lower interest and conflict among stakeholders facilitated or influenced its selection for protection.
-
-Regarding the temporal distribution, a closer look at Figure 11, which represents the normalized timeseries, reveals that the previous downward trend is no longer evident. In this case, it doesn't seem to be any noticeable pattern across the years. However, there are some anomalies in the number of detections, such as a significant increase at the end of 2019. It would be worthwhile to investigate whether this could be linked to a specific event related to fishing activities in the region, such as changes in fishing regulations like quota increases or an abnormality in the stock's growth due to ecological processes.
-
-To further explore the temporal dimension of the data, we can examine if there is a seasonal factor. By referring to Figure 12, it is evident that the majority of detections occurred towards the end of the year, particularly in the months from October to December. Additionally, when evaluated by season (Figure 13), fall and winter accounted for the highest number of detections. This pattern could be attributed to the start of the fishing season. 
-
-### By month
+To further explore the temporal dimension of the data, we can examine if there is a seasonal factor. In the next figure it is evident that most detections occurred at the years' ends, particularly in October, November, and December. Additionally, when evaluated by season, fall and winter accounted for the highest number of detections. This pattern could respond to the start of the fishing season. 
 
 ```{python}
-# assuming combined_df is your DataFrame
 combined_df['year_month'] = pd.to_datetime(combined_df['year_month'])
 # create a new column for the month
 combined_df['month'] = combined_df['year_month'].dt.month
 # group by month and calculate sum for each group
 grouped_df = combined_df.groupby('month')[['area', 'vessels']].sum().reset_index()
-```
 
-
-```{python}
 # Group by the combined year and month column, aggregating the area
 grouped_df_month = grouped_df
 # Convert area from m^2 to km^2
@@ -799,20 +775,13 @@ grouped_df_month['vessels_per_km2'] = grouped_df_month['vessels'] / grouped_df_m
 # Normalize vessels_per_km2
 grouped_df_month['vessels_per_km2_normalized'] = (grouped_df_month['vessels_per_km2'] - grouped_df_month['vessels_per_km2'].min()) / (grouped_df_month['vessels_per_km2'].max() - grouped_df_month['vessels_per_km2'].min())
 
-# Assuming that 'grouped_df' is your DataFrame
 months = {12: 'December', 1: 'January', 2: 'February',
            3: 'March', 4: 'April', 5: 'May',
            6: 'June', 7: 'July', 8: 'August',
            9: 'September', 10: 'October', 11: 'November'}
 
 grouped_df_month['month'] = grouped_df_month['month'].map(months)
-# Check the new dataframe
-grouped_df_month.head()
-```
 
-
-
-```{python}
 # Normalize 'vessels' values for color mapping
 min_max_scaler = preprocessing.MinMaxScaler()
 vessel_norm = min_max_scaler.fit_transform(grouped_df_month[['vessels']])
@@ -829,8 +798,7 @@ data = go.Bar(
     ),
     name="",
     hovertemplate =
-    '<b>Date</b>: %{x|%B %Y}'+
-    '<br><b>Vessels</b>: %{y}<br>',
+    '<br><b>Vessels/km2</b>: %{y}<br>',
     hoverlabel=dict(
         bgcolor="white",
         font_size=16,
@@ -852,18 +820,14 @@ fig = go.Figure(data=[data], layout=layout)
 fig.show()
 ```
 
-### By season
 
 ```{python}
-# assuming combined_df is your DataFrame
 combined_df['year_month'] = pd.to_datetime(combined_df['year_month'])
 # create a new column for the month
 combined_df['month'] = combined_df['year_month'].dt.month
 # group by month and calculate sum for each group
 grouped_df = combined_df.groupby('month')[['area', 'vessels']].sum().reset_index()
-```
-```{python}
-# Assuming that 'grouped_df' is your DataFrame
+
 seasons = {12: 'Winter', 1: 'Winter', 2: 'Winter',
            3: 'Spring', 4: 'Spring', 5: 'Spring',
            6: 'Summer', 7: 'Summer', 8: 'Summer',
@@ -873,10 +837,7 @@ grouped_df['season'] = grouped_df['month'].map(seasons)
 
 # Group by season and calculate sum for 'area' and 'vessels'
 grouped_by_season_df = grouped_df.groupby('season')[['area', 'vessels']].sum().reset_index()
-```
 
-
-```{python}
 # Group by the combined year and month column, aggregating the area
 grouped_df_season = grouped_by_season_df
 # Convert area from m^2 to km^2
@@ -886,12 +847,6 @@ grouped_df_season['vessels_per_km2'] = grouped_df_season['vessels'] / grouped_df
 # Normalize vessels_per_km2
 grouped_df_season['vessels_per_km2_normalized'] = (grouped_df_season['vessels_per_km2'] - grouped_df_season['vessels_per_km2'].min()) / (grouped_df_season['vessels_per_km2'].max() - grouped_df_season['vessels_per_km2'].min())
 
-# Check the new dataframe
-grouped_df_season.head()
-```
-
-
-```{python}
 # Normalize 'vessels' values for color mapping
 min_max_scaler = preprocessing.MinMaxScaler()
 vessel_norm = min_max_scaler.fit_transform(grouped_df_season[['vessels']])
@@ -908,8 +863,7 @@ data = go.Bar(
     ),
     name="",
     hovertemplate =
-    '<b>Date</b>: %{x|%B %Y}'+
-    '<br><b>Vessels</b>: %{y}<br>',
+    '<br><b>Vessels/km2</b>: %{y}<br>',
     hoverlabel=dict(
         bgcolor="white",
         font_size=16,
@@ -933,8 +887,8 @@ fig.show()
 
 ## Analysis limitations
 
-It is important to emphasize that this case study does not attempt to be a rigorous analysis in the field of fishery science. Rather, it aims to showcase the practical application of vessel detection models in fisheries management. Its main objective is to comment on the derived data outputs from these detections and establish correlations with existing scientific work that has successfully implemented this technology for fisheries management. 
+It is important to emphasize that this case study does not attempt to analyze a fishery science case thoroughly. Instead, it aims to showcase the practical application of vessel detection models in fisheries management. Its main objective is to comment on the derived data outputs from these detections and establish correlations with existing scientific work that has successfully implemented this technology for fisheries management. 
 
-In this particular case, it is important to note that the data cannot be directly extrapolated for fishing purposes. To achieve this, the inclusion of a classification model is necessary in order to accurately distinguish between fishing vessels and other types of boats. This differentiation is crucial as it enables the correlation of detections with actual fishing activity. Furthermore, a more comprehensive evaluation of the specific AOI and the fisheries there should be conducted. This would allow for the formulation of hypotheses regarding the detections and their potential linkage to fishing trends in the region. Additionally, it is essential to incorporate data from other sources to support the observations derived from the detection model. By combining traditional observations that define the regional fisheries with our detections, a more robust and comprehensive analysis could be achieved.
+In this particular case, it is important to point out that the data cannot be directly extrapolated for fishing purposes. To achieve this, a classification model is necessary to accurately distinguish between fishing vessels and other types of boats. This differentiation is crucial as it enables the correlation of detections with actual fishing activity. Furthermore, a more comprehensive evaluation of the specific AOI and its fisheries should be conducted. This would allow for the formulation of hypotheses regarding the detections and their potential linkage to regional fishing trends. Additionally, it is essential to incorporate data from other sources to support the observations derived from the detection model. A more robust and comprehensive analysis could be achieved by combining traditional observations that define the regional fisheries with our detections.
 
-While the analysis in this case study had a limited scope, focusing on data extraction, transformation, and representation, it has also revealed certain limitations of this technology. These limitations will be further discussed in the subsequent sections, including the temporal resolution of SAR images, its limitation for detecting small vessels, and the necessity of a reliable classification model.
+While the analysis in this case study had a limited extent, focusing on data extraction, transformation, and representation, it has also served to reveal certain limitations of this technology, including the temporal resolution of SAR images, its constraint for detecting small vessels, and the need of a reliable classification model.
