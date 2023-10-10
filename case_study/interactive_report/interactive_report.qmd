@@ -42,7 +42,11 @@ from sklearn import preprocessing
 
 # Vessel detection using Synthetic Aperture Radar: Potential for improved fisheries management
 
-This report showcases the implementation of a Deep Learning vessel detection model on Sentinel 1 SAR images from the ESA Copernicus program. A total of 348 images, amounting to 93GB of data, were extracted from the Google Earth Engine (GEE) and processed to evaluate a period from January 2018 to December 2022, covering 1024011 km2. The detection model was applied after reprojecting the images to a CRS of interest. The resulting bounding boxes from the model were converted into coordinate points, representing the precise locations of the detected vessels. The images below provide visual examples of this process. Starting with the raw images, the vessels are detected using the model, and their bounding boxes are extracted. By calculating the centroids of these bounding boxes, we obtain the accurate coordinates of the vessels. This transformation of the model outputs into meaningful data has great potential for various applications, including fisheries management.
+In this post, we highlight the practical application of the vessel detection model described in the previous post, using Sentinel 1 SAR images from the ESA Copernicus program. We illustrate how the derived data can be used to monitor fishing activities, while also demonstrating the contributions of these technologies to fisheries management.
+
+## Transforming model outputs
+
+A total of 348 images, amounting to 93GB of data, were extracted from the Google Earth Engine (GEE) and processed to evaluate a period from January 2018 to December 2022, covering 1024011 km2. The detection model was applied after reprojecting the images to a CRS of interest. The resulting bounding boxes from the model were converted into coordinate points, representing the precise locations of the detected vessels. The images below provide visual examples of this process. Starting with the raw images, the vessels are detected using the model, and their bounding boxes are extracted. By calculating the centroids of these bounding boxes, we obtain the accurate coordinates of the vessels. This transformation of the model outputs into meaningful data has great potential for various applications, including fisheries management.
 
 <div style="text-align: center;">
   [<img src="assets/raw_test_image.jpg" alt="Raw Test Image" width="30%" height="30%" />](assets/raw_test_image.jpg)
@@ -50,6 +54,9 @@ This report showcases the implementation of a Deep Learning vessel detection mod
   [<img src="assets/centroids_test_image.jpg" alt="Centroids Test Image" width="30%" height="30%" />](assets/centroids_test_image.jpg)
 </div>
 
+You can find the code necessary for image access, detection processing, and transforming the model outputs into meaningfull data in the following link:
+
+https://github.com/pcarbomestre/SAR-VesselDetection-FisheriesMonitoring/tree/main/case_study
 
 ## Case Study
 
@@ -254,23 +261,6 @@ map
 <br>
 After that preprocessing, a total of 365 vessels were identified and selected for the analysis, with most detections occurring during the initial years of the specified timeframe 
 
-```{python}
-# Extract the 'year' column as a pandas Series
-year_series = non_intersecting_vessels['year']
-# Count the number of rows for each unique year value
-year_counts = year_series.value_counts().reset_index()
-# Rename the columns in the counts DataFrame
-year_counts.columns = ['year', 'count']
-# Calculate the total count
-total_count = year_counts['count'].sum()
-# Create a total row
-total_row = pd.DataFrame({'year': ['Total'], 'count': [total_count]})
-# Append the total row to the counts DataFrame
-# year_counts = year_counts.append(total_row, ignore_index=True) # Deprecated
-year_counts = pd.concat([year_counts, total_row], ignore_index=True)
-# Print the resulting DataFrame
-print(year_counts)
-```
 
 
 ## Spatial information
